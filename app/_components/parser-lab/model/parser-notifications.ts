@@ -36,7 +36,7 @@ export function buildParserNotifications({
 }): ParserNotification[] {
   const normalizationNotification = buildNormalizationNotification(notes);
   const conflictNotifications = activeConflicts.map(conflictToNotification);
-  const shouldShowLlSuggestions = parser === "LL(1)" && !activeConflicts.length;
+  const shouldShowLlSuggestions = parser === "LL(1)";
   const suggestionNotifications = shouldShowLlSuggestions
     ? llSuggestions.map(suggestionToNotification)
     : [];
