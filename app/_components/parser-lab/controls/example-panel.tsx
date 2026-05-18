@@ -1,80 +1,10 @@
-import { Bookmark, Check, Download, Library, Trash2, X } from "lucide-react";
+import { Library, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  EXAMPLES,
-  PARSERS,
-  type Conflict,
-  type ParserExample,
-  type ParserType,
-} from "@/lib/parser-lab";
-import { cn } from "@/lib/utils";
+import { EXAMPLES, type ParserExample } from "@/lib/parser-lab";
 
-export function GrammarInputPanel({
-  grammarText,
-  grammarRows,
-  onGrammarChange,
-  onGrammarExport,
-  onSaveGrammar,
-}: {
-  grammarText: string;
-  grammarRows: number;
-  onGrammarChange: (value: string) => void;
-  onGrammarExport: () => void;
-  onSaveGrammar: (name: string) => void;
-}) {
-  const handleSave = () => {
-    const name = window.prompt("Name this grammar");
-    if (name === null) return;
-    onSaveGrammar(name);
-  };
-
-  return (
-    <section className="rounded-lg border border-zinc-800 bg-zinc-950 p-3 sm:p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-white">Grammar Input</h2>
-        <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon-sm" onClick={handleSave}>
-                <Bookmark />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Save grammar locally</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                onClick={onGrammarExport}
-              >
-                <Download />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Export grammar report as PDF</TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-      <Textarea
-        value={grammarText}
-        onChange={(event) => onGrammarChange(event.target.value)}
-        rows={grammarRows}
-        spellCheck={false}
-        className="resize-none border-zinc-800 bg-black font-mono text-xs leading-5 text-zinc-100"
-      />
-    </section>
-  );
-}
+const FEATURED_EXAMPLE_LIMIT = 8;
 
 export function ExamplePanel({
   onExampleSelect,
@@ -87,7 +17,11 @@ export function ExamplePanel({
 }) {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const featuredExamples = useMemo(
-    () => EXAMPLES.filter((example) => example.featured).slice(0, 8),
+    () =>
+      EXAMPLES.filter((example) => example.featured).slice(
+        0,
+        FEATURED_EXAMPLE_LIMIT,
+      ),
     [],
   );
   const libraryExamples = useMemo(
@@ -268,61 +202,6 @@ function ExampleSection({
             </div>
           </article>
         ))}
-      </div>
-    </section>
-  );
-}
-
-export function ParserCoveragePanel({
-  parser,
-  parserScore,
-  parserConflicts,
-  onParserChange,
-}: {
-  parser: ParserType;
-  parserScore: number;
-  parserConflicts: (parser: ParserType) => Conflict[];
-  onParserChange: (parser: ParserType) => void;
-}) {
-  return (
-    <section className="rounded-lg border border-zinc-800 bg-zinc-950 p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-zinc-200">
-            Determinism coverage
-          </p>
-          <p className="text-xs text-zinc-500">
-            Computed after every grammar edit
-          </p>
-        </div>
-        <Badge variant="outline" className="border-zinc-700 text-zinc-200">
-          {Math.round(parserScore)}%
-        </Badge>
-      </div>
-      <Progress value={parserScore} className="mt-4 h-2 bg-zinc-900" />
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {PARSERS.map((kind) => {
-          const conflicts = parserConflicts(kind);
-          return (
-            <button
-              key={kind}
-              onClick={() => onParserChange(kind)}
-              className={cn(
-                "flex items-center justify-between rounded-md border px-3 py-2 text-left text-xs transition",
-                parser === kind
-                  ? "border-white bg-white text-black"
-                  : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-600",
-              )}
-            >
-              {kind}
-              {conflicts.length ? (
-                <X className="size-3.5 text-red-400" />
-              ) : (
-                <Check className="size-3.5 text-emerald-400" />
-              )}
-            </button>
-          );
-        })}
       </div>
     </section>
   );

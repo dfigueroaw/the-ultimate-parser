@@ -5,7 +5,11 @@ import { Maximize2, Minus, Move, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { AutomataGraph } from "@/lib/parser-lab";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +32,12 @@ const MAX_SCALE = 4;
 const ZOOM_STEP = 1.2;
 const DEFAULT_VIEWPORT: Viewport = { scale: 1, x: 24, y: 24 };
 
-export function GraphvizDiagram({ title, description, graph, rankdir = "LR" }: GraphvizDiagramProps) {
+export function GraphvizDiagram({
+  title,
+  description,
+  graph,
+  rankdir = "LR",
+}: GraphvizDiagramProps) {
   const [svg, setSvg] = useState("");
   const [error, setError] = useState("");
   const [viewport, setViewport] = useState<Viewport>(DEFAULT_VIEWPORT);
@@ -36,7 +45,12 @@ export function GraphvizDiagram({ title, description, graph, rankdir = "LR" }: G
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(DEFAULT_VIEWPORT.scale);
-  const panStartRef = useRef<{ pointerId: number; x: number; y: number; viewport: Viewport } | null>(null);
+  const panStartRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    viewport: Viewport;
+  } | null>(null);
   const dot = useMemo(() => toDot(graph, rankdir), [graph, rankdir]);
 
   useEffect(() => {
@@ -58,7 +72,11 @@ export function GraphvizDiagram({ title, description, graph, rankdir = "LR" }: G
       .catch((renderError: unknown) => {
         if (cancelled) return;
         setSvg("");
-        setError(renderError instanceof Error ? renderError.message : "Unable to render automata graph.");
+        setError(
+          renderError instanceof Error
+            ? renderError.message
+            : "Unable to render automata graph.",
+        );
       });
 
     return () => {
@@ -66,31 +84,37 @@ export function GraphvizDiagram({ title, description, graph, rankdir = "LR" }: G
     };
   }, [dot]);
 
-  const zoomAt = useCallback((clientX: number, clientY: number, factor: number) => {
-    const container = viewportRef.current;
-    if (!container) return;
+  const zoomAt = useCallback(
+    (clientX: number, clientY: number, factor: number) => {
+      const container = viewportRef.current;
+      if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    const originX = clientX - rect.left;
-    const originY = clientY - rect.top;
+      const rect = container.getBoundingClientRect();
+      const originX = clientX - rect.left;
+      const originY = clientY - rect.top;
 
-    setViewport((current) => {
-      const nextScale = clamp(current.scale * factor, MIN_SCALE, MAX_SCALE);
-      const appliedFactor = nextScale / current.scale;
-      return {
-        scale: nextScale,
-        x: originX - (originX - current.x) * appliedFactor,
-        y: originY - (originY - current.y) * appliedFactor,
-      };
-    });
-  }, []);
+      setViewport((current) => {
+        const nextScale = clamp(current.scale * factor, MIN_SCALE, MAX_SCALE);
+        const appliedFactor = nextScale / current.scale;
+        return {
+          scale: nextScale,
+          x: originX - (originX - current.x) * appliedFactor,
+          y: originY - (originY - current.y) * appliedFactor,
+        };
+      });
+    },
+    [],
+  );
 
-  const zoomFromCenter = useCallback((factor: number) => {
-    const container = viewportRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, factor);
-  }, [zoomAt]);
+  const zoomFromCenter = useCallback(
+    (factor: number) => {
+      const container = viewportRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, factor);
+    },
+    [zoomAt],
+  );
 
   const fitToView = useCallback(() => {
     const container = viewportRef.current;
@@ -125,42 +149,54 @@ export function GraphvizDiagram({ title, description, graph, rankdir = "LR" }: G
     return () => cancelAnimationFrame(frame);
   }, [error, fitToView, svg]);
 
-  const handleWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const factor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
-    zoomAt(event.clientX, event.clientY, factor);
-  }, [zoomAt]);
+  const handleWheel = useCallback(
+    (event: React.WheelEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const factor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+      zoomAt(event.clientX, event.clientY, factor);
+    },
+    [zoomAt],
+  );
 
-  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    panStartRef.current = {
-      pointerId: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-      viewport,
-    };
-    setIsPanning(true);
-  }, [viewport]);
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      panStartRef.current = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        viewport,
+      };
+      setIsPanning(true);
+    },
+    [viewport],
+  );
 
-  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const panStart = panStartRef.current;
-    if (!panStart || panStart.pointerId !== event.pointerId) return;
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const panStart = panStartRef.current;
+      if (!panStart || panStart.pointerId !== event.pointerId) return;
 
-    setViewport({
-      ...panStart.viewport,
-      x: panStart.viewport.x + event.clientX - panStart.x,
-      y: panStart.viewport.y + event.clientY - panStart.y,
-    });
-  }, []);
+      setViewport({
+        ...panStart.viewport,
+        x: panStart.viewport.x + event.clientX - panStart.x,
+        y: panStart.viewport.y + event.clientY - panStart.y,
+      });
+    },
+    [],
+  );
 
-  const stopPanning = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const panStart = panStartRef.current;
-    if (panStart?.pointerId === event.pointerId) {
-      panStartRef.current = null;
-      setIsPanning(false);
-    }
-  }, []);
+  const stopPanning = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const panStart = panStartRef.current;
+      if (panStart?.pointerId === event.pointerId) {
+        panStartRef.current = null;
+        setIsPanning(false);
+      }
+    },
+    [],
+  );
 
   return (
     <div className="rounded-md border border-zinc-800 bg-black">
@@ -171,10 +207,16 @@ export function GraphvizDiagram({ title, description, graph, rankdir = "LR" }: G
         </div>
         <div className="flex shrink-0 items-center gap-1 rounded-md border border-zinc-800 bg-zinc-950 p-1">
           <Move className="mx-1 size-3.5 text-zinc-500" />
-          <GraphButton label="Zoom out" onClick={() => zoomFromCenter(1 / ZOOM_STEP)}>
+          <GraphButton
+            label="Zoom out"
+            onClick={() => zoomFromCenter(1 / ZOOM_STEP)}
+          >
             <Minus />
           </GraphButton>
-          <GraphButton label="Zoom in" onClick={() => zoomFromCenter(ZOOM_STEP)}>
+          <GraphButton
+            label="Zoom in"
+            onClick={() => zoomFromCenter(ZOOM_STEP)}
+          >
             <Plus />
           </GraphButton>
           <GraphButton label="Fit to view" onClick={fitToView}>
@@ -196,7 +238,9 @@ export function GraphvizDiagram({ title, description, graph, rankdir = "LR" }: G
         style={{ height: DIAGRAM_HEIGHT }}
       >
         {error ? (
-          <pre className="p-4 whitespace-pre-wrap font-mono text-xs text-red-200">{error}</pre>
+          <pre className="p-4 whitespace-pre-wrap font-mono text-xs text-red-200">
+            {error}
+          </pre>
         ) : svg ? (
           <div
             ref={contentRef}
@@ -230,7 +274,13 @@ function GraphButton({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" onClick={onClick} className="text-zinc-300 hover:text-white">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClick}
+          className="text-zinc-300 hover:text-white"
+        >
           {children}
         </Button>
       </TooltipTrigger>
@@ -269,17 +319,22 @@ function toDot(graph: AutomataGraph, rankdir: "LR" | "TB") {
     arrowsize=0.7
   ];
 
-${graph.nodes.map((node) => {
-  const colorAttrs = node.color
-    ? `, fillcolor="${node.color}33", color="${node.color}", penwidth=2`
-    : "";
-  const shapeAttrs = node.shape ? `, shape="${node.shape}"` : "";
-  return `  ${quote(node.id)} [label=${quote(node.label)}${colorAttrs}${shapeAttrs}];`;
-}).join("\n")}
+${graph.nodes
+  .map((node) => {
+    const colorAttrs = node.color
+      ? `, fillcolor="${node.color}33", color="${node.color}", penwidth=2`
+      : "";
+    const shapeAttrs = node.shape ? `, shape="${node.shape}"` : "";
+    return `  ${quote(node.id)} [label=${quote(node.label)}${colorAttrs}${shapeAttrs}];`;
+  })
+  .join("\n")}
 
 ${graph.edges
   .map((edge) => {
-    const style = edge.kind === "epsilon" ? ', style="dashed", color="#f59e0b", fontcolor="#fbbf24"' : "";
+    const style =
+      edge.kind === "epsilon"
+        ? ', style="dashed", color="#f59e0b", fontcolor="#fbbf24"'
+        : "";
     const label = edge.label ? `label=${quote(edge.label)}` : 'label=""';
     return `  ${quote(edge.from)} -> ${quote(edge.to)} [${label}${style}];`;
   })
@@ -288,7 +343,7 @@ ${graph.edges
 }
 
 function quote(value: string) {
-  return `"${value.replaceAll("\\", "\\\\").replaceAll("\"", "\\\"").replaceAll("\n", "\\n")}"`;
+  return `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\n", "\\n")}"`;
 }
 
 function clamp(value: number, min: number, max: number) {

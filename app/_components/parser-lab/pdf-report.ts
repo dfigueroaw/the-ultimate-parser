@@ -1,8 +1,6 @@
 "use client";
 
 import { instance } from "@viz-js/viz";
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
 import type {
   Content,
   ContentCanvas,
@@ -10,6 +8,7 @@ import type {
   CustomTableLayout,
   TableCell,
   TDocumentDefinitions,
+  TVirtualFileSystem,
 } from "pdfmake/interfaces";
 
 import {
@@ -35,7 +34,9 @@ import {
 } from "@/lib/parser-lab";
 import { isLrParser } from "@/lib/parser-lab/format";
 
-pdfMake.addVirtualFileSystem(pdfFonts);
+type PdfMake = typeof import("pdfmake/build/pdfmake");
+type PdfMakeImport = PdfMake & { default?: PdfMake };
+type PdfFontsImport = TVirtualFileSystem & { default?: TVirtualFileSystem };
 
 export type GrammarReportInput = {
   activeConflicts: Conflict[];
@@ -127,6 +128,7 @@ const tableLayout: CustomTableLayout = {
 export async function exportGrammarReport(input: GrammarReportInput) {
   if (!input.analysis.grammar || !input.analysis.ff) return;
 
+  const pdfMake = await getPdfMake();
   const graphs = await buildGraphSvgs(input);
   const document = buildGrammarDocument(input, graphs);
   pdfMake
@@ -137,6 +139,7 @@ export async function exportGrammarReport(input: GrammarReportInput) {
 export async function exportStringDerivationReport(
   input: StringDerivationReportInput,
 ) {
+  const pdfMake = await getPdfMake();
   const tree = input.treeGraph
     ? await renderGraphSvg({
         title: `${input.parser} Derivation Tree`,
@@ -151,6 +154,26 @@ export async function exportStringDerivationReport(
   pdfMake
     .createPdf(document)
     .download(`ultimate-parser-${slugify(input.parser)}-string-derivation.pdf`);
+}
+
+async function getPdfMake(): Promise<PdfMake> {
+  const [pdfMakeModule, pdfFontsModule] = await Promise.all([
+    import("pdfmake/build/pdfmake"),
+    import("pdfmake/build/vfs_fonts"),
+  ]);
+  const pdfMake = normalizePdfMakeModule(pdfMakeModule as PdfMakeImport);
+  const pdfFonts = normalizePdfFontsModule(pdfFontsModule as PdfFontsImport);
+
+  pdfMake.addVirtualFileSystem(pdfFonts);
+  return pdfMake;
+}
+
+function normalizePdfMakeModule(module: PdfMakeImport): PdfMake {
+  return module.default ?? module;
+}
+
+function normalizePdfFontsModule(module: PdfFontsImport): TVirtualFileSystem {
+  return module.default ?? module;
 }
 
 async function buildGraphSvgs(

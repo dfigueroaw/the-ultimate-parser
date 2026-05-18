@@ -114,6 +114,16 @@ function ValidParserResults({
   sim,
 }: ParserResultsProps & { grammar: Grammar; ff: FirstFollow }) {
   const handleExportDerivation = () => {
+    const { traceRows, treeGraph } = getDerivationArtifacts({
+      astGraph,
+      llParseTreeGraph,
+      llTrace,
+      lrParseTreeGraph,
+      lrTrace,
+      parser,
+      rdTrace,
+    });
+
     exportStringDerivationReport({
       grammar,
       grammarText,
@@ -124,16 +134,23 @@ function ValidParserResults({
           : grammar.transformed,
       parser,
       sim,
-      traceRows:
-        parser === "RD" ? rdTrace : parser === "LL(1)" ? llTrace : lrTrace,
-      treeGraph:
-        parser === "RD"
-          ? astGraph
-          : parser === "LL(1)"
-            ? llParseTreeGraph
-            : lrParseTreeGraph,
+      traceRows,
+      treeGraph,
     });
   };
+
+  const parsingPanel = (
+    <ParsingPanel
+      canGenerateParsing={canGenerateParsing}
+      draftInput={draftInput}
+      hasGeneratedParsing={hasGeneratedParsing}
+      parser={parser}
+      sim={sim}
+      onDraftInputChange={onDraftInputChange}
+      onExportDerivation={handleExportDerivation}
+      onGenerateParsing={onGenerateParsing}
+    />
+  );
 
   return (
     <div className="space-y-6">
@@ -169,18 +186,7 @@ function ValidParserResults({
         </Panel>
       )}
 
-      {parser === "RD" && (
-        <ParsingPanel
-          canGenerateParsing={canGenerateParsing}
-          draftInput={draftInput}
-          hasGeneratedParsing={hasGeneratedParsing}
-          parser={parser}
-          sim={sim}
-          onDraftInputChange={onDraftInputChange}
-          onExportDerivation={handleExportDerivation}
-          onGenerateParsing={onGenerateParsing}
-        />
-      )}
+      {parser === "RD" && parsingPanel}
 
       {parser === "LL(1)" && (
         <Panel title="LL(1) Rule Table" icon={Table2}>
@@ -188,18 +194,7 @@ function ValidParserResults({
         </Panel>
       )}
 
-      {parser === "LL(1)" && (
-        <ParsingPanel
-          canGenerateParsing={canGenerateParsing}
-          draftInput={draftInput}
-          hasGeneratedParsing={hasGeneratedParsing}
-          parser={parser}
-          sim={sim}
-          onDraftInputChange={onDraftInputChange}
-          onExportDerivation={handleExportDerivation}
-          onGenerateParsing={onGenerateParsing}
-        />
-      )}
+      {parser === "LL(1)" && parsingPanel}
 
       {parser === "LL(1)" && hasGeneratedParsing && (
         <Panel title="LL(1) Input Derivation Table" icon={Play}>
@@ -225,18 +220,7 @@ function ValidParserResults({
         />
       )}
 
-      {showLrViews && (
-        <ParsingPanel
-          canGenerateParsing={canGenerateParsing}
-          draftInput={draftInput}
-          hasGeneratedParsing={hasGeneratedParsing}
-          parser={parser}
-          sim={sim}
-          onDraftInputChange={onDraftInputChange}
-          onExportDerivation={handleExportDerivation}
-          onGenerateParsing={onGenerateParsing}
-        />
-      )}
+      {showLrViews && parsingPanel}
 
       {showLrViews && hasGeneratedParsing && (
         <Panel title={`${parser} Input Derivation Table`} icon={Play}>
@@ -309,6 +293,34 @@ function NormalizedGrammarPanel({
       </div>
     </Panel>
   );
+}
+
+function getDerivationArtifacts({
+  astGraph,
+  llParseTreeGraph,
+  llTrace,
+  lrParseTreeGraph,
+  lrTrace,
+  parser,
+  rdTrace,
+}: {
+  astGraph?: AutomataGraph;
+  llParseTreeGraph?: AutomataGraph;
+  llTrace: LlTraceRow[];
+  lrParseTreeGraph?: AutomataGraph;
+  lrTrace: LrTraceRow[];
+  parser: ParserType;
+  rdTrace: RdTraceRow[];
+}) {
+  if (parser === "RD") {
+    return { traceRows: rdTrace, treeGraph: astGraph };
+  }
+
+  if (parser === "LL(1)") {
+    return { traceRows: llTrace, treeGraph: llParseTreeGraph };
+  }
+
+  return { traceRows: lrTrace, treeGraph: lrParseTreeGraph };
 }
 
 function LrAutomataPanel({
