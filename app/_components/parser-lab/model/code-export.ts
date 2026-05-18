@@ -13,6 +13,7 @@ export type CodeExportSettings = {
   maxRepeatIterations: number;
   moduleFormat: "standalone" | "commonjs" | "esm";
   parserName: string;
+  printAstTree: boolean;
   skipWhitespace: boolean;
   startRule: string;
   strictEnd: boolean;
@@ -31,6 +32,7 @@ export const DEFAULT_CODE_EXPORT_SETTINGS: CodeExportSettings = {
   maxRepeatIterations: 1000,
   moduleFormat: "standalone",
   parserName: "GeneratedParser",
+  printAstTree: false,
   skipWhitespace: true,
   startRule: "",
   strictEnd: true,
@@ -63,6 +65,7 @@ export function generateParserCode(
     includeTrace: settings.includeTrace,
     inputMode: settings.inputMode,
     maxRepeatIterations: settings.maxRepeatIterations,
+    printAstTree: settings.printAstTree,
     skipWhitespace: settings.skipWhitespace,
     startRule,
     strictEnd: settings.strictEnd,
@@ -133,7 +136,7 @@ function parserRuntime(parserName: string) {
       nextIndex: accepted ? endIndex : result.index,
     };
 
-    if (this.options.includeParseTree) output.tree = accepted ? result.node : null;
+    if (this.options.includeParseTree || this.options.printAstTree) output.tree = accepted ? result.node : null;
     if (this.options.includeTrace) output.trace = this.trace.slice();
     if (!accepted) output.error = this.formatError();
 
@@ -279,6 +282,20 @@ function parserRuntime(parserName: string) {
     if (!this.options.includeTrace) return;
     this.trace.push({ action, subject, index });
   }
+
+  formatTree(node, prefix = "", isLast = true, isRoot = true) {
+    if (!node) return "";
+    const label = node.type === "token" ? JSON.stringify(node.value) : node.name ?? node.type;
+    const branch = isRoot ? "" : (isLast ? "└─ " : "├─ ");
+    const childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ");
+    const children = node.children ?? [];
+    return [
+      \`\${prefix}\${branch}\${label}\`,
+      ...children.map((child, index) =>
+        this.formatTree(child, childPrefix, index === children.length - 1, false),
+      ),
+    ].filter(Boolean).join("\\n");
+  }
 }`;
 }
 
@@ -317,6 +334,10 @@ function cliSnippet(
   const input = process.argv.slice(2).join(" ");
   const result = parser.parse(input);
   console.log(JSON.stringify(result, null, 2));
+  if (parser.options.printAstTree && result.tree) {
+    console.log("\\nAST derivation tree:");
+    console.log(parser.formatTree(result.tree));
+  }
   process.exitCode = result.ok ? 0 : 1;`;
 
   if (moduleFormat === "esm") {

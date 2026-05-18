@@ -198,6 +198,13 @@ export function CodeExportDialog({
                   }
                 />
                 <CheckField
+                  label="Print AST derivation tree in CLI output"
+                  checked={settings.printAstTree}
+                  onChange={(printAstTree) =>
+                    setSettings({ ...settings, printAstTree })
+                  }
+                />
+                <CheckField
                   label="Include trace collection"
                   checked={settings.includeTrace}
                   onChange={(includeTrace) =>
