@@ -5,6 +5,7 @@ import {
   GrammarInputPanel,
   ParserCoveragePanel,
 } from "./controls";
+import { exportParserCode } from "./model/code-export";
 import { exportGrammarReport } from "./pdf-report";
 import { ParserResults } from "./parser-results";
 import { useParserLab } from "./use-parser-lab";
@@ -26,6 +27,9 @@ export function ParserLabApp() {
             grammarText={state.grammarText}
             grammarRows={state.grammarRows}
             onGrammarChange={actions.setGrammarText}
+            onCodeExport={(settings) =>
+              exportParserCode(state.grammarText, settings)
+            }
             onGrammarExport={() =>
               exportGrammarReport({
                 activeConflicts: state.activeConflicts,
