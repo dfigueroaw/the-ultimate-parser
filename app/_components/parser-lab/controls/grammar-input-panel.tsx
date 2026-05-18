@@ -1,4 +1,4 @@
-import { Bookmark, Code2, Download } from "lucide-react";
+import { BookOpen, Bookmark, Code2, Download } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { CodeExportSettings } from "../model/code-export";
 import { CodeExportDialog } from "./code-export-dialog";
+import { EbnfGuideDialog } from "./ebnf-guide-dialog";
 
 export function GrammarInputPanel({
   grammarText,
@@ -27,6 +28,7 @@ export function GrammarInputPanel({
   onSaveGrammar: (name: string) => void;
 }) {
   const [codeExportOpen, setCodeExportOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const handleSave = () => {
     const name = window.prompt("Name this grammar");
     if (name === null) return;
@@ -38,6 +40,18 @@ export function GrammarInputPanel({
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white">Grammar Input</h2>
         <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => setGuideOpen(true)}
+              >
+                <BookOpen />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Open ISO 14977 EBNF guide</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" size="icon-sm" onClick={handleSave}>
@@ -89,6 +103,7 @@ export function GrammarInputPanel({
           }}
         />
       )}
+      {guideOpen && <EbnfGuideDialog onClose={() => setGuideOpen(false)} />}
     </section>
   );
 }
